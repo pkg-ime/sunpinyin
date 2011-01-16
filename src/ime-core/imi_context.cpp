@@ -104,7 +104,7 @@ void CIMIContext::printLattice ()
 
 CIMIContext::CIMIContext () 
     : m_tailIdx(1), m_pModel(NULL), m_pPinyinTrie(NULL), m_pUserDict(NULL), m_pHistory(NULL), 
-      m_historyPower(3), m_bFullSymbolForwarding(false), m_pGetFullSymbolOp(NULL),
+      m_historyPower(5), m_bFullSymbolForwarding(false), m_pGetFullSymbolOp(NULL),
       m_bFullPunctForwarding(true), m_pGetFullPunctOp(NULL), m_bDynaCandiOrder(true),
       m_candiStarts(0), m_candiEnds(0), m_csLevel(0), m_bNonCompleteSyllable(true),
       m_pPySegmentor(0), m_bOmitPunct(false)
@@ -179,6 +179,12 @@ void CIMIContext::_forwardSyllables (unsigned i, unsigned j, const IPySegmentor:
 
     for (; it != ite; ++it)
         _forwardSingleSyllable (i, j, *it, seg);
+
+    it  = seg.m_fuzzy_syllables.begin ();
+    ite = seg.m_fuzzy_syllables.end ();
+
+    for (; it != ite; ++it)
+        _forwardSingleSyllable (i, j, *it, seg, true);
 }
 
 
@@ -194,7 +200,7 @@ void CIMIContext::_forwardString (unsigned i, unsigned j, const std::vector<unsi
     }
 }
 
-void CIMIContext::_forwardSingleSyllable (unsigned i, unsigned j, TSyllable syllable, const IPySegmentor::TSegment& seg)
+void CIMIContext::_forwardSingleSyllable (unsigned i, unsigned j, TSyllable syllable, const IPySegmentor::TSegment& seg, bool fuzzy)
 {
     const CPinyinTrie::TNode * pn = NULL;
 
@@ -213,7 +219,7 @@ void CIMIContext::_forwardSingleSyllable (unsigned i, unsigned j, TSyllable syll
             pn = m_pPinyinTrie->transfer (lxst.m_pPYNode, syllable);
             if (pn) {
                 added_from_sysdict = true;
-                TLexiconState new_lxst = TLexiconState (lxst.m_start, pn, lxst.m_syls, lxst.m_seg_path);
+                TLexiconState new_lxst = TLexiconState (lxst.m_start, pn, lxst.m_syls, lxst.m_seg_path, fuzzy);
                 new_lxst.m_syls.push_back (syllable);
                 new_lxst.m_num_of_inner_fuzzies = lxst.m_num_of_inner_fuzzies + (seg.m_inner_fuzzy? 1: 0);
                 new_lxst.m_seg_path.push_back (seg.m_start+seg.m_len);
@@ -230,7 +236,7 @@ void CIMIContext::_forwardSingleSyllable (unsigned i, unsigned j, TSyllable syll
             if (!words.empty() || !added_from_sysdict) {
                 // even if the words is empty we'll add a fake lexicon
                 // here. This helps _saveUserDict detect new words.
-                TLexiconState new_lxst = TLexiconState (lxst.m_start, words, lxst.m_syls, lxst.m_seg_path);
+                TLexiconState new_lxst = TLexiconState (lxst.m_start, words, lxst.m_syls, lxst.m_seg_path, fuzzy);
                 new_lxst.m_syls.push_back (syllable);
                 new_lxst.m_num_of_inner_fuzzies = lxst.m_num_of_inner_fuzzies + (seg.m_inner_fuzzy? 1: 0);
                 new_lxst.m_seg_path.push_back (seg.m_start+seg.m_len);
@@ -247,7 +253,7 @@ void CIMIContext::_forwardSingleSyllable (unsigned i, unsigned j, TSyllable syll
         std::vector<unsigned> seg_path;
         seg_path.push_back (seg.m_start);
         seg_path.push_back (seg.m_start+seg.m_len);
-        TLexiconState new_lxst = TLexiconState (i, pn, syls, seg_path);
+        TLexiconState new_lxst = TLexiconState (i, pn, syls, seg_path, fuzzy);
         new_lxst.m_num_of_inner_fuzzies = seg.m_inner_fuzzy? 1: 0;
         fr.m_lexiconStates.push_back (new_lxst);
     }
@@ -319,7 +325,8 @@ void CIMIContext::_forwardTail (unsigned i, unsigned j)
 {
     CLatticeFrame &fr = m_lattice[j];
     fr.m_type = CLatticeFrame::TAIL;
-    fr.m_lexiconStates.push_back (TLexiconState (i, OOV_WORD_ID));
+
+    fr.m_lexiconStates.push_back (TLexiconState (i, ENDING_WORD_ID));
 }
 
 bool CIMIContext::searchFrom (unsigned idx)
@@ -353,13 +360,17 @@ bool CIMIContext::searchFrom (unsigned idx)
             if (lxst.m_start == m_candiStarts && idx > m_candiEnds)
                 affectCandidates = true;
 
-            /* only selected the word with higher unigram probablities */
-            int maxsz = MAX_LEXICON_TRIES;
+            // only selected the word with higher unigram probablities, and 
+            // narrow the search deepth and lower the initial score for fuzzy
+            // syllables
+            int maxsz = it->m_bFuzzy? MAX_LEXICON_TRIES/2: MAX_LEXICON_TRIES;
+            double ic = it->m_bFuzzy? 0.5: 1.0;
+
             int sz = word_num<maxsz? word_num: maxsz;
             int i = 0, count = 0;
             for (i = 0; count < sz && i < sz && (words[i].m_bSeen || count < 2); ++i) {
                 if (m_csLevel >= words[i].m_csLevel) {
-                    _transferBetween (lxst.m_start, idx, &lxst, words[i].m_id);
+                    _transferBetween (lxst.m_start, idx, &lxst, words[i].m_id, ic);
                     ++ count;
                 }
             }
@@ -397,6 +408,10 @@ void CIMIContext::_transferBetween (unsigned start, unsigned end, TLexiconState*
     CLatticeStates::iterator it  = start_fr.m_latticeStates.begin();
     CLatticeStates::iterator ite = start_fr.m_latticeStates.end();
 
+    // for 1-length lattice states, replace ending_word_id (comma) with none_word_id (recognized by CThreadSlm)
+    if (wid == ENDING_WORD_ID && it != ite && it->m_pBackTraceNode && it->m_pBackTraceNode->m_frIdx == 0)
+        wid = NONE_WORD_ID;
+
     for (; it != ite; ++it) {
         node.m_pBackTraceNode = &(*it);
         node.m_backTraceWordId = wid;
@@ -425,7 +440,7 @@ void CIMIContext::_backTraceBestPaths ()
     CLatticeStates& tail_states = m_lattice[m_tailIdx].m_latticeStates;
 
     // there must be some transfer errors
-    if (tail_states.size() != 1)
+    if (!tail_states.size())
         return;
 
     TLatticeState *bs = &(tail_states[0]);
@@ -615,7 +630,8 @@ void CIMIContext::getCandidates (unsigned frIdx, CCandidates& result)
                     continue;
 
                 //sorting according to the order in PinYinTire
-                cp.m_Rank = TCandiRank(false, st.front() == cp.m_candi.m_wordId, len, false, i);
+                cp.m_Rank = TCandiRank(false, !st.empty() && st.front() == cp.m_candi.m_wordId,
+                                       len, false, i);
                 it_map = map.find(cp.m_candi.m_cwstr);
                 if (it_map == map.end() || cp.m_Rank < it_map->second.m_Rank || cp.m_candi.m_wordId > INI_USRDEF_WID)
                     map [cp.m_candi.m_cwstr] = cp;
@@ -642,7 +658,8 @@ void CIMIContext::getCandidates (unsigned frIdx, CCandidates& result)
                 int len = cp.m_candi.m_pLexiconState->m_syls.size() -
                           cp.m_candi.m_pLexiconState->m_num_of_inner_fuzzies;
                 if (0 == len) len = 1;
-                cp.m_Rank = TCandiRank(false, st.front() == cp.m_candi.m_wordId, len, true, ltst.m_score/ltst.m_pBackTraceNode->m_score);
+                cp.m_Rank = TCandiRank(false, !st.empty() && st.front() == cp.m_candi.m_wordId,
+                                       len, true, ltst.m_score/ltst.m_pBackTraceNode->m_score);
                 it_map = map.find(cp.m_candi.m_cwstr);
                 if (it_map == map.end() || cp.m_Rank < it_map->second.m_Rank || cp.m_candi.m_wordId > INI_USRDEF_WID)
                     map[cp.m_candi.m_cwstr] = cp;
@@ -710,13 +727,13 @@ void CIMIContext::_saveUserDict ()
     unsigned s = 0;
     bool has_user_selected = false;
     std::vector<unsigned>::iterator it  = m_bestPath.begin();
-    std::vector<unsigned>::iterator ite = m_bestPath.end() - 1;
+    std::vector<unsigned>::iterator ite = m_bestPath.end();
     for (; it != ite; ++it, ++s) {
         CLatticeFrame &fr = m_lattice[*it];
-        if (!fr.isSyllableFrame ())
+        if (!fr.isSyllableFrame ()) {
+            --it;
             break;
-
-        has_user_selected |= (fr.m_bwType & CLatticeFrame::USER_SELECTED);
+        }
 
         CSyllables &tmp = fr.m_bestWord.m_pLexiconState->m_syls;
         if (syls.size() + tmp.size() > MAX_USRDEF_WORD_LEN) {
@@ -724,6 +741,7 @@ void CIMIContext::_saveUserDict ()
             break;
         }
 
+        has_user_selected |= (fr.m_bwType & CLatticeFrame::USER_SELECTED);
         std::copy (tmp.begin(), tmp.end(), back_inserter(syls));
     }
 

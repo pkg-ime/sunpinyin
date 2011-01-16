@@ -38,8 +38,6 @@
 #ifndef ___SUN_SLM_PORTABILITY_H___
 #define ___SUN_SLM_PORTABILITY_H___
 
-#include "host_os.h"
-
 #include <stdio.h>
 #include <math.h>
 #include <string>
@@ -54,7 +52,6 @@
 #endif //__cpluscplus
 #endif //defined(sun)
 
-#define  SIM_ID_NOT_CHAR  (0xFFFF)
 
 #ifndef HOST_OS_GNUC_2
     #if defined(DEBUG) && !defined(NDEBUG)
@@ -69,6 +66,16 @@
         #define DEBUG_print(fmt, a...)   (int(0))
     #endif
 #endif // !HOST_OS_GNUC_2
+
+#ifndef HAVE_LOG2
+inline double log2(double x) { return log(x) / M_LN2; }
+#endif
+
+#if defined(sun) // Solaris/HP-UX 's iconv is const char**
+typedef const char* TIConvSrcPtr;
+#else
+typedef char* TIConvSrcPtr;
+#endif
 
 union TDoubleAnatomy {
 public:
@@ -135,8 +142,7 @@ public:
         {if (buf) sprintf(buf, "%10lf*2^%d", m_base, m_exp);}
 
     double
-    log2() const
-        {return ::log2(m_base)+m_exp;}
+    log2() const { return ::log2(m_base) + m_exp; }
 
 private:
     double   m_base;
@@ -156,65 +162,6 @@ typedef unsigned int          TWCHAR;
 #endif
 
 typedef TWCHAR                TSIMWordId;
-
-class TSIMChar {
-public:
-    inline TSIMChar() : m_ch(0)
-        { }
-
-    inline TSIMChar(const TSIMChar& r) : m_ch(r.m_ch)
-        { }
-
-    inline TSIMChar(unsigned char c) : m_ch(c)
-        { }
-
-    inline TSIMChar(const TWCHAR & wch)
-        {
-            m_ch = (wch > SIM_ID_NOT_CHAR)?(SIM_ID_NOT_CHAR):(wch);
-        }
-
-    //inline TSIMChar(unsigned int ui) same as TSIMChar(TWCHAR)
-
-    //inline operator TWCHAR(void) const  same as follow
-
-    inline operator unsigned int(void ) const
-        { return m_ch; }
-
-    inline operator bool() const
-        { return m_ch != 0; }
-
-    inline TSIMChar& operator= (const TSIMChar & r)
-        { m_ch = r.m_ch; return *this; }
-
-    inline bool operator == (const TSIMChar & r) const
-        { return m_ch == r.m_ch; }
-
-    inline bool operator != (const TSIMChar & r) const
-        { return m_ch != r.m_ch; }
-
-    inline bool operator <  (const TSIMChar & r) const
-        { return m_ch <  r.m_ch; }
-
-    inline bool operator >  (const TSIMChar & r) const
-        { return m_ch >  r.m_ch; }
-
-    inline bool operator <= (const TSIMChar & r) const
-        { return m_ch <= r.m_ch; }
-
-    inline bool operator >= (const TSIMChar & r) const
-        { return m_ch >= r.m_ch; }
-
-private:
-    unsigned short m_ch;
-};
-
-#if !defined(WORDS_BIGENDIAN)
-
-
-#else
-
-
-#endif
 
 const TSIMWordId SIM_ID_NOT_WORD        = (0x0);
 const TSIMWordId SIM_ID_UNKNOWN_CN      = (2);

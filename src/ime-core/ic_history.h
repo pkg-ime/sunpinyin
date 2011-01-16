@@ -103,6 +103,12 @@ public:
     */
     virtual bool
     loadFromBuffer(void* buf_ptr, size_t sz) = 0;
+
+    virtual void
+    addStopWords(const std::set<unsigned int>& stopWords) = 0;
+
+    virtual void
+    initStopWords() = 0;
 };
 
 class CBigramHistory : public CICHistory {
@@ -147,6 +153,9 @@ public:
     bool
     saveToFile (const char *fname = NULL);
 
+    virtual void addStopWords (const std::set<unsigned int>& stopWords);
+    virtual void initStopWords ();
+
 protected:
     typedef unsigned                              TWordId;
     typedef std::pair<TWordId, TWordId>           TBigram;
@@ -156,13 +165,14 @@ protected:
     typedef std::deque<TWordId>                   TContextMemory;
 
     static const size_t contxt_memory_size;
+    static const double focus_memory_ratio;
 
     TContextMemory          m_memory;
     TUnigramPool            m_unifreq;
     TBigramPool             m_bifreq;
 
     std::string             m_history_path;
-    static std::set<unsigned int>                  s_stopWords;
+    std::set<unsigned int>  m_stopWords;
 
 protected:
     double pr(TBigram& bg);

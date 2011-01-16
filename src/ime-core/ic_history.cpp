@@ -56,49 +56,12 @@ CICHistory::~CICHistory()
 
 static bool bBigramHistoryInited = false;
 const size_t  CBigramHistory::contxt_memory_size = 8192;
-std::set<unsigned>  CBigramHistory::s_stopWords;
-
-/**
-* Adding stop words including :
-* 的 地 得 着 了 你 我 他 她 它 你们 我们 他们
-* 们
-* ??是 使 将
-*/
-
-void CBigramHistory::initClass()
-{
-    if (bBigramHistoryInited == false) {
-        bBigramHistoryInited = true;
-        s_stopWords.clear();
-
-        s_stopWords.insert(0);     //unknown world
-        s_stopWords.insert(DCWID); //seperator word id used by history memory interanlly
-
-        s_stopWords.insert(44751); //的
-        s_stopWords.insert(21410); //地
-        s_stopWords.insert(71373); //得
-        s_stopWords.insert(72583); //着
-        s_stopWords.insert(1701);  //了
-
-        s_stopWords.insert(35483); //你
-        s_stopWords.insert(34834); //我
-        s_stopWords.insert(17613); //他
-        s_stopWords.insert(30394); //她
-        s_stopWords.insert(19066); //它
-        s_stopWords.insert(35484); //你们
-        s_stopWords.insert(34838); //我们
-        s_stopWords.insert(17617); //他们
-        s_stopWords.insert(30395); //她们
-        s_stopWords.insert(19069); //它们
-
-        s_stopWords.insert(17345);  //们
-    }
-}
+const double  CBigramHistory::focus_memory_ratio = 0.05;
 
 //FIXME: CBigramHistory need to be thread safe
 CBigramHistory::CBigramHistory() : m_memory(), m_unifreq(), m_bifreq()
 {
-
+    initStopWords();
 }
 
 CBigramHistory::~CBigramHistory()
@@ -275,34 +238,56 @@ double CBigramHistory::pr(TBigram& bigram)
     int uf0 = uniFreq(bigram.first);
     int bf = biFreq(bigram);
     int uf1 = uniFreq(bigram.second);
+
     double pr = 0.0;
     pr += 0.68*double(bf)/double(uf0+0.5);
     pr += 0.32*double(uf1)/double(m_memory.size() + (contxt_memory_size-m_memory.size())/10);
-    //if (pr != 0) printf("cache pr(%d|%d) = %lf\n", bigram.second, bigram.first, pr);
+
+#ifdef DEBUG
+    if (pr != 0)
+        fprintf(stderr, "uf0:%d bf:%d uf1:%d pr(%d|%d):%lf\n", uf0, bf, uf1,
+                bigram.second, bigram.first, pr);
+#endif
+
     return pr;
 }
 
 int  CBigramHistory::uniFreq(TUnigram& ug)
 {
     int freq = 0;
-    if (s_stopWords.find(ug) == s_stopWords.end()) {
+    if (m_stopWords.find(ug) == m_stopWords.end()) {
         TUnigramPool::iterator it = m_unifreq.find(ug);
         if (it != m_unifreq.end()) {
             freq = it->second;
+            TContextMemory::reverse_iterator rit = m_memory.rbegin();
+            for (int i = 0; rit != m_memory.rend() && i < contxt_memory_size * focus_memory_ratio; i++) {
+                if (*rit == ug)
+                    freq += 1.0 / focus_memory_ratio;
+                *rit++;
+            }
         }
     }
     //if (freq != 0) printf("uniFreq[%d]-->%d\n", ug, freq);
-    return freq;
+    return freq / 2;
 }
 
 int  CBigramHistory::biFreq(TBigram& bg)
 {
     int freq = 0;
-    //std::set<unsigned>::const_iterator ite = s_stopWords.end();
-    if (bg.first != DCWID && bg.second != DCWID) {
+    //std::set<unsigned>::const_iterator ite = m_stopWords.end();
+    if (m_stopWords.find(bg.first) != m_stopWords.end()
+        && m_stopWords.find(bg.second) != m_stopWords.end()) {
         TBigramPool::const_iterator it = m_bifreq.find(bg);
-        if (it != m_bifreq.end())
+        if (it != m_bifreq.end()) {
             freq =  it->second;
+            TContextMemory::reverse_iterator re = m_memory.rbegin();
+            TContextMemory::reverse_iterator rs = re + 1;
+            for (int i = 0; rs != m_memory.rend() && i < contxt_memory_size * focus_memory_ratio; i++) {
+                if (*rs == bg.first && *re == bg.second)
+                    freq += 1.0 / focus_memory_ratio;
+                ++rs; ++re;
+            }
+        }
     }
 
     //if (freq != 0) printf("biFreq[%d,%d]-->%d\n", bg.first, bg.second, freq);
@@ -322,7 +307,7 @@ void CBigramHistory::decUniFreq(TUnigram& ug)
 
 bool CBigramHistory::seenBefore(unsigned wid)
 {
-    return (wid != DCWID && s_stopWords.find(wid) == s_stopWords.end() &&
+    return (wid != DCWID && m_stopWords.find(wid) == m_stopWords.end() &&
             m_unifreq.find(wid) != m_unifreq.end());
 }
 
@@ -392,4 +377,17 @@ void CBigramHistory::forget(unsigned *its_wid, unsigned *ite_wid)
         if (it != m_bifreq.end())
             m_bifreq.erase(it);
     }
+}
+
+void CBigramHistory::addStopWords(const std::set<unsigned int>& stopWords)
+{
+    m_stopWords.insert (stopWords.begin(), stopWords.end());
+}
+
+void CBigramHistory::initStopWords()
+{
+    m_stopWords.clear();
+    
+    m_stopWords.insert(0);     //unknown world
+    m_stopWords.insert(DCWID); //seperator word id used by history memory interanlly
 }
