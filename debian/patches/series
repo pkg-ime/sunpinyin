@@ -1,0 +1,3 @@
+disable-lm-dict-compile.patch
+ignore-cflags-cxxflags-from-environment.patch
+bump-new-pkgconfig-version.patch

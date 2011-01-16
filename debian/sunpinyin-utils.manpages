@@ -1,0 +1,13 @@
+doc/getWordFreq.1
+doc/ids2ngram.1
+doc/slminfo.1
+doc/idngram_merge.1
+doc/genpyt.1
+doc/slmthread.1
+doc/slmseg.1
+doc/mmseg.1
+doc/tslminfo.1
+doc/slmbuild.1
+doc/tslmendian.1
+doc/tslmpack.1
+doc/slmprune.1

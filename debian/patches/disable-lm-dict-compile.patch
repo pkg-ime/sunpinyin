@@ -1,0 +1,28 @@
+Disable LM data and dictionary data compile, these data will be 
+in another package. 
+--- a/SConstruct
++++ b/SConstruct
+@@ -366,12 +366,6 @@
+ lib = env.SharedLibrary('sunpinyin-%d.%d' % (abi_major, abi_minor),
+                         source=imesource)
+ 
+-env.Command('rawlm', 'build/tslmpack',
+-            '$MAKE -C raw WGET="$WGET" TAR="$TAR"')
+-
+-env.Command('lm', 'rawlm',
+-            '$MAKE -C data WGET="$WGET" TAR="$TAR"')
+-
+ if GetOption('clean'):
+     os.environ['TAR'] = env['TAR']
+     os.environ['MAKE'] = env['MAKE']
+@@ -400,9 +394,7 @@
+ 
+     lib_pkgconfig_target = env.Install(libdir+'/pkgconfig',
+                                        ['sunpinyin-2.0.pc'])
+-    libdata_target = env.Install(libdatadir,
+-                                 ['data/lm_sc.t3g',
+-                                  'data/pydict_sc.bin'])
++    libdata_target = env.Install(libdatadir)
+     header_targets = []
+     for header in headers:
+         header_targets.append(env.InstallAs(headersdir + header[3:], header))

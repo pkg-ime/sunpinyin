@@ -1,0 +1,75 @@
+#!/usr/bin/make -f
+# Sample debian/rules that uses debhelper.
+# GNU copyright 1997 to 1999 by Joey Hess.
+#
+# Modified for sunpinyin package by 
+# Liang Guo <bluestonechina@gmail.com> 2010
+
+SCONS=scons 
+POD2MAN=pod2man
+PROGS=genpyt idngram_merge slminfo slmseg tslminfo getWordFreq ids2ngram \
+      mmseg slmbuild slmprune slmthread tslmendian tslmpack
+
+ifneq (,$(findstring debug,$(DEB_BUILD_OPTIONS)))
+  CXXFLAGS += -g
+endif
+
+CXXFLAGS += -pipe -DHAVE_CONFIG_H -DSUNPINYIN_DATA_DIR="/usr/lib/sunpinyin/data"
+
+build: build-stamp
+build-stamp: 
+	dh_quilt_patch
+	-$(SCONS)
+	for p in $(PROGS); do $(POD2MAN) --section 1 doc/$$p.pod > doc/$$p.1; done
+	touch build-stamp
+
+clean: clean-patched 
+clean-patched:
+	dh_testdir
+	dh_testroot
+	-$(SCONS) -c
+	-rm -r config.log config.h	\
+		.sconf_temp .sconsign.dblite \
+		src/host_os.h sunpinyin-2.0.pc
+	-for p in $(PROGS); do rm doc/$$p.1; done
+	dh_quilt_unpatch
+	dh_clean 
+
+install: install-stamp
+install-stamp: build-stamp
+	dh_testdir
+	dh_testroot
+	dh_prep
+	dh_installdirs
+	-$(SCONS) install --prefix=$(DEB_DESTDIR)/usr --install-sandbox=debian/tmp
+	-for p in $(PROGS); do install -D -m 0755 build/$$p $(CURDIR)/debian/tmp/usr/bin/$$p; done
+	mkdir -p $(CURDIR)/debian/tmp/usr/share/sunpinyin/
+	cp -r python $(CURDIR)/debian/tmp/usr/share/sunpinyin/
+	dh_install --sourcedir=debian/tmp --fail-missing
+	touch install-stamp
+
+binary-arch: build install
+	dh_testdir
+	dh_testroot
+	dh_installchangelogs
+	dh_installdocs 
+	dh_installexamples
+	dh_installman
+	dh_link
+	dh_strip
+	dh_compress
+	dh_fixperms
+	dh_makeshlibs
+	dh_installdeb
+	dh_shlibdeps
+	dh_gencontrol
+	dh_md5sums
+	dh_builddeb
+
+# Build architecture-independent files here.
+binary-indep: build install
+# We have nothing to do by default.
+
+binary: binary-indep binary-arch
+.PHONY: build clean binary-indep binary-arch binary install
+

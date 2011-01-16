@@ -1,0 +1,50 @@
+Source: sunpinyin
+Priority: optional
+Maintainer: IME Packaging Team <pkg-ime-devel@lists.alioth.debian.org>
+Uploaders: Liang Guo <bluestonechina@gmail.com>
+Build-Depends: debhelper (>= 7.0.50~), scons, libsqlite3-dev, pkg-config, quilt (>= 0.46-8~)
+Standards-Version: 3.9.1
+Section: libs
+Homepage: http://code.google.com/p/sunpinyin
+
+Package: libsunpinyin-dev
+Section: libdevel
+Architecture: any
+Depends: libsunpinyin3 (= ${binary:Version}), ${misc:Depends}, libsqlite3-dev
+Description: Simplified Chinese Input Method from SUN (development)
+ Sunpinyin is a statistical language model (SLM) based input method 
+ engine for Simplified Chinese, it features full sentence input.
+ .
+ This package contains the development header files that allows others 
+ to write their own front-end for sunpinyin.
+
+Package: libsunpinyin3
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Recommends: sunpinyin-data
+Description: Simplified Chinese Input Method from SUN (runtime)
+ Sunpinyin is a statistical language model (SLM) based input method 
+ engine for Simplified Chinese, it features full sentence input.
+ .
+ This package contains the runtime library.
+
+Package: sunpinyin-utils
+Section: utils
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, python
+Description: Simplified Chinese Input Method from SUN (utilities)
+ Sunpinyin is a statistical language model (SLM) based input method 
+ engine for Simplified Chinese, it features full sentence input.
+ .
+ This package contains some utilities used by open-gram project, 
+ including:
+ .
+ genpyt - generate the pinyin lexicon
+ tslmpack - convert the ARPA format of SunPinyin back-off language 
+ model to its binary representation
+ tslmendian - change the byte-order of sunpinyin's threaded back-off 
+ language model
+ .
+ and some Python programs which maybe used to import user dictionary 
+ from other input method such as sougou, google, fcitx etc.
+
