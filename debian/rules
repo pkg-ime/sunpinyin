@@ -14,7 +14,7 @@ ifneq (,$(findstring debug,$(DEB_BUILD_OPTIONS)))
   CXXFLAGS += -g
 endif
 
-CXXFLAGS += -pipe -DHAVE_CONFIG_H -DSUNPINYIN_DATA_DIR="/usr/lib/sunpinyin/data"
+CXXFLAGS += -pipe
 
 build: build-stamp
 build-stamp: 
@@ -30,7 +30,7 @@ clean-patched:
 	-$(SCONS) -c
 	-rm -r config.log config.h	\
 		.sconf_temp .sconsign.dblite \
-		src/host_os.h sunpinyin-2.0.pc
+		configure.conf sunpinyin-2.0.pc
 	-for p in $(PROGS); do rm doc/$$p.1; done
 	dh_quilt_unpatch
 	dh_clean 
