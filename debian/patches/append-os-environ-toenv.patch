@@ -1,0 +1,13 @@
+When LDFLAGS, CXXFLAGS and others is defined in system environment, the value defined
+in system environment should be appended to env, rather than replace.
+--- a/SConstruct
++++ b/SConstruct
+@@ -158,7 +158,7 @@
+     for (x, y) in envvar:
+         if x in os.environ:
+             print 'Warning: you\'ve set %s in the environmental variable!' % x
+-            env[y] = os.environ[x]
++            env[y] += os.environ[x]
+     
+ env = CreateEnvironment()
+ opts.Update(env)
