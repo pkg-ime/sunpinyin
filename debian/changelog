@@ -1,8 +1,9 @@
-sunpinyin (2.0.3~rc2-1) experimental; urgency=low
+sunpinyin (2.0.3-1) unstable; urgency=low
 
-  * New Upstream Version 2.0.3~rc2.
+  * New Upstream Version 2.0.3.
+  * Upload to unstable.
 
- -- Liang Guo <bluestonechina@gmail.com>  Sun, 16 Jan 2011 16:27:53 +0800
+ -- Liang Guo <bluestonechina@gmail.com>  Sat, 19 Feb 2011 10:38:38 +0800
 
 sunpinyin (2.0.2-1) experimental; urgency=low
 
