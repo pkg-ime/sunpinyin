@@ -6,6 +6,8 @@ Build-Depends: debhelper (>= 7.0.50~), scons, libsqlite3-dev, pkg-config, quilt 
 Standards-Version: 3.9.1
 Section: libs
 Homepage: http://code.google.com/p/sunpinyin
+Vcs-Git: git://git.debian.org/git/collab-maint/sunpinyin
+Vcs-Browser: http://git.debian.org/?p=collab-maint/sunpinyin.git
 
 Package: libsunpinyin-dev
 Section: libdevel

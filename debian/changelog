@@ -2,6 +2,7 @@ sunpinyin (2.0.3-1) unstable; urgency=low
 
   * New Upstream Version 2.0.3.
   * Upload to unstable.
+  * Update VCS field in debian/control.
 
  -- Liang Guo <bluestonechina@gmail.com>  Sat, 19 Feb 2011 10:38:38 +0800
 
