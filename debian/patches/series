@@ -1,2 +1,2 @@
-disable-lm-dict-compile.patch
 append-os-environ-toenv.patch
+disable-lm-dict-compile.patch
