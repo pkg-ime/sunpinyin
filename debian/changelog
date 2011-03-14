@@ -1,3 +1,10 @@
+sunpinyin (2.0.3-2) unstable; urgency=low
+
+  * Build with prefix=$(DEB_DESTDIR)/usr (Close: #617752)
+  * 
+
+ -- Liang Guo <bluestonechina@gmail.com>  Mon, 14 Mar 2011 23:52:04 +0800
+
 sunpinyin (2.0.3-1) unstable; urgency=low
 
   * New Upstream Version 2.0.3.

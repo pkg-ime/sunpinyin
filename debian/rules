@@ -19,7 +19,7 @@ CXXFLAGS += -pipe
 build: build-stamp
 build-stamp: 
 	dh_quilt_patch
-	-$(SCONS)
+	-$(SCONS)  --prefix=$(DEB_DESTDIR)/usr 
 	for p in $(PROGS); do $(POD2MAN) --section 1 doc/$$p.pod > doc/$$p.1; done
 	touch build-stamp
 
