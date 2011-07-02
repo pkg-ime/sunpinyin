@@ -1,3 +1,9 @@
+sunpinyin (2.0.3-3) unstable; urgency=low
+
+  * Call dh_makeshlibs with -V (Close: #632355)
+
+ -- Liang Guo <bluestonechina@gmail.com>  Sat, 02 Jul 2011 11:47:30 +0800
+
 sunpinyin (2.0.3-2) unstable; urgency=low
 
   * Build with prefix=$(DEB_DESTDIR)/usr (Close: #617752)
