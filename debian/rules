@@ -16,7 +16,9 @@ endif
 
 CXXFLAGS += -pipe
 
-build: build-stamp
+build: build-arch build-indep
+build-arch: build-stamp
+build-indep: build-stamp
 build-stamp: 
 	dh_quilt_patch
 	-$(SCONS)  --prefix=$(DEB_DESTDIR)/usr 
