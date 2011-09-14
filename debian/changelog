@@ -4,7 +4,8 @@ sunpinyin (2.0.3-3) unstable; urgency=low
   * Bump Standards-Version to 3.9.2
   * Add build-arch and build-indep in debian/rules
   * Update debian/copyright to fit DEP-5
-  
+  * Move git repository from collab-maint to pkg-ime,
+    Update Vcs-* fields in debian/control
  -- Liang Guo <bluestonechina@gmail.com>  Thu, 08 Sep 2011 23:13:01 +0800
 
 sunpinyin (2.0.3-2) unstable; urgency=low
