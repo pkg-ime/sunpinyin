@@ -10,8 +10,8 @@ Files: src/config/beos.h
 Copyright: (c) 2008 Anthony Lee <don.anthony.lee@gmail.com>
 License: LGPL-2.1 or CDDL
 
-Files: src/slm/tslmendian/slm_file.cpp,src/slm/tslmendian/slm_endian.cpp,
-       src/slm/tslmendian/slm_file.h,src/slm/tslmpack/*
+Files: src/slm/tslmendian/slm_file.cpp src/slm/tslmendian/slm_endian.cpp 
+ src/slm/tslmendian/slm_file.h src/slm/tslmpack/*
 Copyright: (c) 2009 Kov Chai <tchaikov@gmail.com>
 License: LGPL-2.1 or CDDL
 
