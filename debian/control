@@ -5,6 +5,7 @@ Uploaders: Liang Guo <bluestonechina@gmail.com>
 Build-Depends: debhelper (>= 7.0.50~), scons, libsqlite3-dev, pkg-config, quilt (>= 0.46-8~)
 Standards-Version: 3.9.2
 Section: libs
+DM-Upload-Allowed: yes
 Homepage: http://code.google.com/p/sunpinyin
 Vcs-Git: git://git.debian.org/git/pkg-ime/sunpinyin
 Vcs-Browser: http://git.debian.org/?p=pkg-ime/sunpinyin.git
