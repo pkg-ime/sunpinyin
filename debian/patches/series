@@ -2,3 +2,4 @@ append-os-environ-toenv.patch
 disable-lm-dict-compile.patch
 fix-ftbfs-on-sh.patch
 fix-ftbfs-on-mipsel.patch
+remove-10-candidate-words-limitation.patch

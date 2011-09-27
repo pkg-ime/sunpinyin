@@ -1,0 +1,15 @@
+From: Weng Xuetian <wengxt@gmail.com>
+Description: remove 10 candidate words limitation
+Origin: vendor, https://github.com/sunpinyin/sunpinyin/commit/ecd26da914d672193149af651d6f01647fde7f88
+
+--- a/src/ime-core/imi_view.h
++++ b/src/ime-core/imi_view.h
+@@ -188,7 +188,7 @@
+     CIMIWinHandler* getWinHandler(void) {return m_pWinHandler;}
+ 
+     void setHotkeyProfile (CHotkeyProfile *prof) { m_pHotkeyProfile = prof;}
+-    void setCandiWindowSize (unsigned size) {m_candiWindowSize = size<10? size: 10;}
++    void setCandiWindowSize (unsigned size) {m_candiWindowSize = size;}
+     CHotkeyProfile* getHotkeyProfile() { return m_pHotkeyProfile; }
+     unsigned getCandiWindowSize() { return m_candiWindowSize; }
+ 
